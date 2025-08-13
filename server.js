@@ -1,19 +1,20 @@
-// TeleMed Backend API Server
+// TeleMed Backend API Server - In-Memory Storage
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB connection
-const MONGODB_URI = 'mongodb+srv://vrathanpriyan:@saran1812@cluster0.5fwqb3m.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const DB_NAME = 'telemed';
-
-let db;
+// In-memory storage
+const storage = {
+    patients: new Map(),
+    consultations: new Map(),
+    medicalRecords: new Map(),
+    imageAnalyses: new Map(),
+    analytics: new Map()
+};
 
 // Middleware
 app.use(cors());
@@ -22,76 +23,68 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static('public'));
 
 // File upload configuration
-const storage = multer.memoryStorage();
+const multerStorage = multer.memoryStorage();
 const upload = multer({ 
-    storage: storage,
+    storage: multerStorage,
     limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
 });
 
-// Connect to MongoDB
-async function connectToDatabase() {
-    try {
-        const client = new MongoClient(MONGODB_URI);
-        await client.connect();
-        db = client.db(DB_NAME);
-        console.log('Connected to MongoDB Atlas');
-        
-        // Create indexes for better performance
-        await createIndexes();
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
-    }
+// Utility functions
+function generateId() {
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-async function createIndexes() {
-    try {
-        // Patient indexes
-        await db.collection('patients').createIndex({ patientId: 1 }, { unique: true });
-        await db.collection('patients').createIndex({ email: 1 });
-        
-        // Consultation indexes
-        await db.collection('consultations').createIndex({ patientId: 1 });
-        await db.collection('consultations').createIndex({ timestamp: -1 });
-        await db.collection('consultations').createIndex({ featureType: 1 });
-        
-        // Medical records indexes
-        await db.collection('medicalRecords').createIndex({ patientId: 1 });
-        await db.collection('medicalRecords').createIndex({ createdAt: -1 });
-        
-        // Analytics indexes
-        await db.collection('analytics').createIndex({ patientId: 1 });
-        await db.collection('analytics').createIndex({ timestamp: -1 });
-        await db.collection('analytics').createIndex({ eventType: 1 });
-        
-        console.log('Database indexes created');
-    } catch (error) {
-        console.error('Error creating indexes:', error);
+function findByField(collection, field, value) {
+    for (let [key, item] of collection) {
+        if (item[field] === value) {
+            return item;
+        }
     }
+    return null;
+}
+
+function findAllByField(collection, field, value) {
+    const results = [];
+    for (let [key, item] of collection) {
+        if (item[field] === value) {
+            results.push(item);
+        }
+    }
+    return results;
 }
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'healthy', 
-        database: db ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString()
+        database: 'in-memory',
+        timestamp: new Date().toISOString(),
+        stats: {
+            patients: storage.patients.size,
+            consultations: storage.consultations.size,
+            medicalRecords: storage.medicalRecords.size,
+            imageAnalyses: storage.imageAnalyses.size,
+            analytics: storage.analytics.size
+        }
     });
 });
 
 // Patient Management Routes
-app.post('/api/patients', async (req, res) => {
+app.post('/api/patients', (req, res) => {
     try {
+        const patientId = req.body.patientId || generateId();
         const patientData = {
             ...req.body,
+            patientId,
+            _id: generateId(),
             createdAt: new Date(),
             updatedAt: new Date()
         };
         
-        const result = await db.collection('patients').insertOne(patientData);
+        storage.patients.set(patientId, patientData);
         res.json({ 
             success: true, 
-            data: { ...patientData, _id: result.insertedId }
+            data: patientData
         });
     } catch (error) {
         console.error('Error creating patient:', error);
@@ -99,11 +92,9 @@ app.post('/api/patients', async (req, res) => {
     }
 });
 
-app.get('/api/patients/:patientId', async (req, res) => {
+app.get('/api/patients/:patientId', (req, res) => {
     try {
-        const patient = await db.collection('patients').findOne({ 
-            patientId: req.params.patientId 
-        });
+        const patient = storage.patients.get(req.params.patientId);
         
         if (!patient) {
             return res.status(404).json({ success: false, error: 'Patient not found' });
@@ -116,22 +107,22 @@ app.get('/api/patients/:patientId', async (req, res) => {
     }
 });
 
-app.put('/api/patients/:patientId', async (req, res) => {
+app.put('/api/patients/:patientId', (req, res) => {
     try {
-        const updateData = {
-            ...req.body,
-            updatedAt: new Date()
-        };
+        const existingPatient = storage.patients.get(req.params.patientId);
         
-        const result = await db.collection('patients').updateOne(
-            { patientId: req.params.patientId },
-            { $set: updateData }
-        );
-        
-        if (result.matchedCount === 0) {
+        if (!existingPatient) {
             return res.status(404).json({ success: false, error: 'Patient not found' });
         }
         
+        const updateData = {
+            ...existingPatient,
+            ...req.body,
+            patientId: req.params.patientId,
+            updatedAt: new Date()
+        };
+        
+        storage.patients.set(req.params.patientId, updateData);
         res.json({ success: true, data: updateData });
     } catch (error) {
         console.error('Error updating patient:', error);
@@ -140,18 +131,21 @@ app.put('/api/patients/:patientId', async (req, res) => {
 });
 
 // Consultation Management Routes
-app.post('/api/consultations', async (req, res) => {
+app.post('/api/consultations', (req, res) => {
     try {
+        const consultationId = req.body.consultationId || generateId();
         const consultationData = {
             ...req.body,
+            consultationId,
+            _id: generateId(),
             timestamp: new Date(),
             createdAt: new Date()
         };
         
-        const result = await db.collection('consultations').insertOne(consultationData);
+        storage.consultations.set(consultationId, consultationData);
         res.json({ 
             success: true, 
-            data: { ...consultationData, _id: result.insertedId }
+            data: consultationData
         });
     } catch (error) {
         console.error('Error saving consultation:', error);
@@ -159,16 +153,17 @@ app.post('/api/consultations', async (req, res) => {
     }
 });
 
-app.get('/api/consultations/patient/:patientId', async (req, res) => {
+app.get('/api/consultations/patient/:patientId', (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const consultations = await db.collection('consultations')
-            .find({ patientId: req.params.patientId })
-            .sort({ timestamp: -1 })
-            .limit(limit)
-            .toArray();
+        const consultations = findAllByField(storage.consultations, 'patientId', req.params.patientId);
         
-        res.json({ success: true, data: consultations });
+        // Sort by timestamp descending and limit results
+        const sortedConsultations = consultations
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, limit);
+        
+        res.json({ success: true, data: sortedConsultations });
     } catch (error) {
         console.error('Error fetching consultations:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -176,17 +171,20 @@ app.get('/api/consultations/patient/:patientId', async (req, res) => {
 });
 
 // Medical Records Routes
-app.post('/api/medical-records', async (req, res) => {
+app.post('/api/medical-records', (req, res) => {
     try {
+        const recordId = req.body.recordId || generateId();
         const recordData = {
             ...req.body,
+            recordId,
+            _id: generateId(),
             createdAt: new Date()
         };
         
-        const result = await db.collection('medicalRecords').insertOne(recordData);
+        storage.medicalRecords.set(recordId, recordData);
         res.json({ 
             success: true, 
-            data: { ...recordData, _id: result.insertedId }
+            data: recordData
         });
     } catch (error) {
         console.error('Error saving medical record:', error);
@@ -194,14 +192,14 @@ app.post('/api/medical-records', async (req, res) => {
     }
 });
 
-app.get('/api/medical-records/patient/:patientId', async (req, res) => {
+app.get('/api/medical-records/patient/:patientId', (req, res) => {
     try {
-        const records = await db.collection('medicalRecords')
-            .find({ patientId: req.params.patientId })
-            .sort({ createdAt: -1 })
-            .toArray();
+        const records = findAllByField(storage.medicalRecords, 'patientId', req.params.patientId);
         
-        res.json({ success: true, data: records });
+        // Sort by creation date descending
+        const sortedRecords = records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        res.json({ success: true, data: sortedRecords });
     } catch (error) {
         console.error('Error fetching medical records:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -209,19 +207,25 @@ app.get('/api/medical-records/patient/:patientId', async (req, res) => {
 });
 
 // Image Upload and Analysis Routes
-app.post('/api/images', upload.single('image'), async (req, res) => {
+app.post('/api/images', upload.single('image'), (req, res) => {
     try {
         const metadata = JSON.parse(req.body.metadata);
+        const imageId = generateId();
         const imageData = {
             ...metadata,
+            imageId,
+            _id: imageId,
             imageBuffer: req.file.buffer,
             uploadedAt: new Date()
         };
         
-        const result = await db.collection('imageAnalyses').insertOne(imageData);
+        storage.imageAnalyses.set(imageId, imageData);
+        
+        // Return metadata without buffer for response
+        const { imageBuffer, ...responseData } = imageData;
         res.json({ 
             success: true, 
-            data: { ...metadata, _id: result.insertedId }
+            data: responseData
         });
     } catch (error) {
         console.error('Error saving image:', error);
@@ -229,18 +233,17 @@ app.post('/api/images', upload.single('image'), async (req, res) => {
     }
 });
 
-app.get('/api/images/patient/:patientId', async (req, res) => {
+app.get('/api/images/patient/:patientId', (req, res) => {
     try {
-        const images = await db.collection('imageAnalyses')
-            .find({ patientId: req.params.patientId })
-            .sort({ uploadedAt: -1 })
-            .toArray();
+        const images = findAllByField(storage.imageAnalyses, 'patientId', req.params.patientId);
         
         // Remove image buffers from response for performance
-        const imagesWithoutBuffers = images.map(img => {
-            const { imageBuffer, ...imageWithoutBuffer } = img;
-            return imageWithoutBuffer;
-        });
+        const imagesWithoutBuffers = images
+            .map(img => {
+                const { imageBuffer, ...imageWithoutBuffer } = img;
+                return imageWithoutBuffer;
+            })
+            .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
         
         res.json({ success: true, data: imagesWithoutBuffers });
     } catch (error) {
@@ -250,17 +253,20 @@ app.get('/api/images/patient/:patientId', async (req, res) => {
 });
 
 // Analytics Routes
-app.post('/api/analytics', async (req, res) => {
+app.post('/api/analytics', (req, res) => {
     try {
+        const eventId = req.body.eventId || generateId();
         const analyticsData = {
             ...req.body,
+            eventId,
+            _id: eventId,
             timestamp: new Date()
         };
         
-        const result = await db.collection('analytics').insertOne(analyticsData);
+        storage.analytics.set(eventId, analyticsData);
         res.json({ 
             success: true, 
-            data: { ...analyticsData, _id: result.insertedId }
+            data: analyticsData
         });
     } catch (error) {
         console.error('Error saving analytics:', error);
@@ -268,25 +274,31 @@ app.post('/api/analytics', async (req, res) => {
     }
 });
 
-app.get('/api/analytics', async (req, res) => {
+app.get('/api/analytics', (req, res) => {
     try {
         const { patientId, startDate, endDate, eventType } = req.query;
-        const query = {};
+        let analytics = Array.from(storage.analytics.values());
         
-        if (patientId) query.patientId = patientId;
-        if (eventType) query.eventType = eventType;
+        // Apply filters
+        if (patientId) {
+            analytics = analytics.filter(event => event.patientId === patientId);
+        }
+        if (eventType) {
+            analytics = analytics.filter(event => event.eventType === eventType);
+        }
         if (startDate && endDate) {
-            query.timestamp = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-            };
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            analytics = analytics.filter(event => {
+                const eventDate = new Date(event.timestamp);
+                return eventDate >= start && eventDate <= end;
+            });
         }
         
-        const analytics = await db.collection('analytics')
-            .find(query)
-            .sort({ timestamp: -1 })
-            .limit(1000)
-            .toArray();
+        // Sort by timestamp descending and limit to 1000
+        analytics = analytics
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 1000);
         
         res.json({ success: true, data: analytics });
     } catch (error) {
@@ -296,23 +308,20 @@ app.get('/api/analytics', async (req, res) => {
 });
 
 // Authentication Routes (Simple implementation)
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', (req, res) => {
     try {
         const { email, password } = req.body;
         
-        // In production, use proper password hashing
-        const user = await db.collection('patients').findOne({ 
-            email: email,
-            password: password // This should be hashed in production
-        });
+        // Find user by email and password
+        const user = findByField(storage.patients, 'email', email);
         
-        if (user) {
+        if (user && user.password === password) {
             // Remove password from response
             const { password, ...userWithoutPassword } = user;
             res.json({ 
                 success: true, 
                 user: userWithoutPassword,
-                token: 'simple-token-' + user._id // In production, use JWT
+                token: 'simple-token-' + user._id
             });
         } else {
             res.status(401).json({ success: false, error: 'Invalid credentials' });
@@ -324,56 +333,36 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Data Synchronization Route
-app.post('/api/sync', async (req, res) => {
+app.post('/api/sync', (req, res) => {
     try {
         const { patients, consultations, medicalRecords, imageAnalyses, analytics } = req.body;
         
         // Sync patients
         if (patients && Object.keys(patients).length > 0) {
-            const patientOps = Object.values(patients).map(patient => ({
-                updateOne: {
-                    filter: { patientId: patient.patientId },
-                    update: { $set: patient },
-                    upsert: true
-                }
-            }));
-            await db.collection('patients').bulkWrite(patientOps);
+            Object.values(patients).forEach(patient => {
+                storage.patients.set(patient.patientId, patient);
+            });
         }
         
         // Sync consultations
         if (consultations && Object.keys(consultations).length > 0) {
-            const consultationOps = Object.values(consultations).map(consultation => ({
-                updateOne: {
-                    filter: { consultationId: consultation.consultationId },
-                    update: { $set: consultation },
-                    upsert: true
-                }
-            }));
-            await db.collection('consultations').bulkWrite(consultationOps);
+            Object.values(consultations).forEach(consultation => {
+                storage.consultations.set(consultation.consultationId, consultation);
+            });
         }
         
         // Sync medical records
         if (medicalRecords && Object.keys(medicalRecords).length > 0) {
-            const recordOps = Object.values(medicalRecords).map(record => ({
-                updateOne: {
-                    filter: { recordId: record.recordId },
-                    update: { $set: record },
-                    upsert: true
-                }
-            }));
-            await db.collection('medicalRecords').bulkWrite(recordOps);
+            Object.values(medicalRecords).forEach(record => {
+                storage.medicalRecords.set(record.recordId, record);
+            });
         }
         
         // Sync analytics
         if (analytics && Object.keys(analytics).length > 0) {
-            const analyticsOps = Object.values(analytics).map(event => ({
-                updateOne: {
-                    filter: { eventId: event.eventId },
-                    update: { $set: event },
-                    upsert: true
-                }
-            }));
-            await db.collection('analytics').bulkWrite(analyticsOps);
+            Object.values(analytics).forEach(event => {
+                storage.analytics.set(event.eventId, event);
+            });
         }
         
         res.json({ 
@@ -388,27 +377,28 @@ app.post('/api/sync', async (req, res) => {
 });
 
 // Dashboard Statistics Route
-app.get('/api/dashboard/stats', async (req, res) => {
+app.get('/api/dashboard/stats', (req, res) => {
     try {
-        const stats = await Promise.all([
-            db.collection('patients').countDocuments(),
-            db.collection('consultations').countDocuments(),
-            db.collection('medicalRecords').countDocuments(),
-            db.collection('imageAnalyses').countDocuments(),
-            db.collection('consultations').aggregate([
-                { $group: { _id: '$featureType', count: { $sum: 1 } } },
-                { $sort: { count: -1 } }
-            ]).toArray()
-        ]);
+        // Calculate consultation stats by feature type
+        const consultationsByFeature = {};
+        for (let consultation of storage.consultations.values()) {
+            const featureType = consultation.featureType || 'unknown';
+            consultationsByFeature[featureType] = (consultationsByFeature[featureType] || 0) + 1;
+        }
+        
+        // Convert to array format
+        const consultationsByFeatureArray = Object.entries(consultationsByFeature)
+            .map(([_id, count]) => ({ _id, count }))
+            .sort((a, b) => b.count - a.count);
         
         res.json({
             success: true,
             data: {
-                totalPatients: stats[0],
-                totalConsultations: stats[1],
-                totalMedicalRecords: stats[2],
-                totalImageAnalyses: stats[3],
-                consultationsByFeature: stats[4]
+                totalPatients: storage.patients.size,
+                totalConsultations: storage.consultations.size,
+                totalMedicalRecords: storage.medicalRecords.size,
+                totalImageAnalyses: storage.imageAnalyses.size,
+                consultationsByFeature: consultationsByFeatureArray
             }
         });
     } catch (error) {
@@ -436,13 +426,8 @@ app.use((req, res) => {
 });
 
 // Start server
-async function startServer() {
-    await connectToDatabase();
-    
-    app.listen(PORT, () => {
-        console.log(`TeleMed API Server running on port ${PORT}`);
-        console.log(`Health check: http://localhost:${PORT}/api/health`);
-    });
-}
-
-startServer().catch(console.error);
+app.listen(PORT, () => {
+    console.log(`TeleMed API Server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+    console.log('Using in-memory storage - data will not persist between restarts');
+});

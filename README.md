@@ -1,6 +1,6 @@
 # TeleMed - AI-Powered Telemedicine Platform
 
-A modern telemedicine website powered by Google Gemini AI, featuring AI health assistance and video consultation capabilities.
+A modern telemedicine website powered by Google Gemini AI, featuring AI health assistance, video consultation capabilities, and a lightweight backend API with in-memory storage.
 
 ## Features
 
@@ -34,20 +34,32 @@ A modern telemedicine website powered by Google Gemini AI, featuring AI health a
 
 ## Quick Start
 
-### 1. Get Your Gemini API Key
+### 1. Start the Backend Server
+```bash
+# Install dependencies
+npm install
+
+# Start the server
+npm start
+# or for development with auto-reload
+npm run dev
+```
+
+The server will run on `http://localhost:3000`
+
+### 2. Get Your Gemini API Key
 1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Sign in with your Google account
 3. Create a new API key
 4. Copy the API key for use in the application
 
-### 2. Setup the Application
-1. Clone or download this repository
-2. Open `index.html` in a web browser
-3. Navigate to the AI Health Assistant
-4. Enter your Gemini API key in the configuration panel
-5. Start chatting with the AI health assistant!
+### 3. Setup the Frontend
+1. Open `index.html` in a web browser
+2. Navigate to the AI Health Assistant
+3. Enter your Gemini API key in the configuration panel
+4. Start chatting with the AI health assistant!
 
-### 3. For Video Consultation
+### 4. For Video Consultation
 1. Navigate to the Video Consultation page
 2. Enter a Room ID and Patient Name
 3. Allow camera and microphone access
@@ -57,19 +69,21 @@ A modern telemedicine website powered by Google Gemini AI, featuring AI health a
 
 ```
 telemedicine-app/
-├── index.html              # Main landing page
-├── chat.html               # AI-powered chat interface
-├── image-analysis.html     # Medical image analysis page
-├── consultation.html       # Video consultation room
-├── test-api.html          # API testing tool
+├── server.js               # Backend API server (in-memory storage)
+├── package.json           # Node.js dependencies
+├── index.html             # Main landing page
+├── chat.html              # AI-powered chat interface
+├── image-analysis.html    # Medical image analysis page
+├── consultation.html      # Video consultation room
+├── test-api.html         # API testing tool
 ├── css/
-│   └── style.css          # Complete styling
+│   └── style.css         # Complete styling
 ├── js/
-│   ├── app.js             # Main application logic
-│   ├── gemini.js          # Gemini AI integration
-│   ├── image-analysis.js  # Image analysis functionality
-│   └── webrtc.js          # Video calling functionality
-└── README.md              # This file
+│   ├── app.js            # Main application logic
+│   ├── gemini.js         # Gemini AI integration
+│   ├── image-analysis.js # Image analysis functionality
+│   └── webrtc.js         # Video calling functionality
+└── README.md             # This file
 ```
 
 ## Configuration
@@ -141,7 +155,8 @@ AI: "**Image Analysis - Chest X-ray**
 ## Security & Privacy
 
 - **API Key Security**: Your Gemini API key is stored locally and only sent to Google's servers
-- **No Data Storage**: Chat conversations are not permanently stored on any server
+- **In-Memory Storage**: All data is stored in server memory and will be lost when the server restarts
+- **No Persistent Database**: No database required - perfect for development and testing
 - **Local Notes**: Consultation notes are saved locally in your browser
 - **WebRTC Security**: Video calls use encrypted peer-to-peer connections
 
@@ -168,8 +183,9 @@ AI: "**Image Analysis - Chest X-ray**
 ## Development
 
 ### Local Development
-1. Serve files using a local web server (required for some features)
-2. For HTTPS (required for camera access), use tools like:
+1. Start the backend server: `npm start` or `npm run dev`
+2. Serve frontend files using a local web server (required for some features)
+3. For HTTPS (required for camera access), use tools like:
    - `python -m http.server 8000` (then use ngrok for HTTPS)
    - Live Server extension in VS Code
    - Local development servers with SSL certificates
