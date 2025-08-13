@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Image Analysis - TeleMed</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="index.html">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>TeleMed</span>
+                    </a>
+                </div>
+                <div class="nav-title">
+                    <i class="fas fa-camera-retro"></i>
+                    Medical Image Analysis
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="image-analysis-container">
+        <div class="analysis-sidebar">
+            <div class="api-config">
+                <h3>Configuration</h3>
+                <div class="config-group">
+                    <label for="apiKey">Gemini API Key:</label>
+                    <input type="password" id="apiKey" placeholder="Enter your Gemini API key">
+                    <button id="saveConfig" class="btn btn-small">Save</button>
+                </div>
+                <div class="status" id="apiStatus">
+                    <i class="fas fa-circle-exclamation"></i>
+                    API Key Required
+                </div>
+            </div>
+
+            <div class="analysis-info">
+                <h3>Supported Medical Images</h3>
+                <ul>
+                    <li><i class="fas fa-x-ray"></i> X-rays & Radiographs</li>
+                    <li><i class="fas fa-brain"></i> CT & MRI Scans</li>
+                    <li><i class="fas fa-microscope"></i> Lab Reports</li>
+                    <li><i class="fas fa-eye"></i> Skin Conditions</li>
+                    <li><i class="fas fa-file-medical-alt"></i> Medical Documents</li>
+                    <li><i class="fas fa-heartbeat"></i> ECG/EKG Reports</li>
+                </ul>
+
+                <div class="analysis-features">
+                    <h4>Analysis Features</h4>
+                    <ul>
+                        <li>Detailed image observation</li>
+                        <li>Abnormality detection</li>
+                        <li>Condition suggestions</li>
+                        <li>Specialist recommendations</li>
+                        <li>Follow-up guidance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="medical-disclaimer">
+                <h4><i class="fas fa-exclamation-triangle"></i> Important Notice</h4>
+                <p>This AI analysis is for <strong>informational purposes only</strong> and should never replace professional medical diagnosis or treatment.</p>
+                <p>Always consult qualified healthcare professionals for medical concerns.</p>
+            </div>
+        </div>
+
+        <div class="analysis-main">
+            <div class="upload-section">
+                <div class="upload-header">
+                    <h2>Upload Medical Image for Analysis</h2>
+                    <p>Drag and drop your medical image or click to browse</p>
+                </div>
+
+                <div class="upload-area-large" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">
+                        <h3>Drop your medical image here</h3>
+                        <p>or click to browse files</p>
+                        <div class="supported-formats">
+                            <span>Supports: JPEG, PNG, GIF, WebP, BMP, TIFF</span>
+                            <span>Max size: 20MB</span>
+                        </div>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="image-preview-large" id="imagePreview" style="display: none;">
+                    <div class="preview-header">
+                        <h3>Image Preview</h3>
+                        <button id="removeImage" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="preview-content">
+                        <img id="previewImg" alt="Medical image preview">
+                        <div class="image-details">
+                            <div class="detail-item">
+                                <label>File Name:</label>
+                                <span id="imageName"></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>File Size:</label>
+                                <span id="imageSize"></span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Image Type:</label>
+                                <span id="imageType"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-input-section" id="analysisSection" style="display: none;">
+                <div class="input-header">
+                    <h3>Analysis Request</h3>
+                    <p>Describe what you'd like me to focus on (optional)</p>
+                </div>
+                <div class="analysis-input">
+                    <textarea id="analysisQuery" placeholder="e.g., 'Please check for any abnormalities in this X-ray' or 'What do you see in this skin condition?'"></textarea>
+                    <button id="analyzeImage" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        Analyze Image
+                    </button>
+                </div>
+            </div>
+
+            <div class="analysis-results" id="analysisResults" style="display: none;">
+                <div class="results-header">
+                    <h3>Analysis Results</h3>
+                    <div class="analysis-timestamp" id="analysisTimestamp"></div>
+                </div>
+                <div class="results-content" id="resultsContent">
+                    <!-- Analysis results will be displayed here -->
+                </div>
+                <div class="results-actions">
+                    <button id="newAnalysis" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i>
+                        New Analysis
+                    </button>
+                    <button id="saveResults" class="btn btn-primary">
+                        <i class="fas fa-download"></i>
+                        Save Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/gemini.js"></script>
+    <script src="js/image-analysis.js"></script>
+</body>
+</html>

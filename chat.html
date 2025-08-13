@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Assistant - TeleMed</title>
+    <meta name="description" content="Chat with AI health assistant powered by Google Gemini for medical guidance and health information.">
+    <meta name="theme-color" content="#667eea">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="index.html">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>TeleMed</span>
+                    </a>
+                </div>
+                <div class="nav-title">
+                    <i class="fas fa-robot"></i>
+                    AI Health Assistant
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <main class="chat-container" id="main-content">
+        <div class="chat-sidebar">
+            <div class="api-config">
+                <h3>Configuration</h3>
+                <div class="config-group">
+                    <label for="apiKey">Gemini API Key:</label>
+                    <input type="password" id="apiKey" placeholder="Enter your Gemini API key">
+                    <button id="saveConfig" class="btn btn-small">Save</button>
+                </div>
+                <div class="status" id="apiStatus">
+                    <i class="fas fa-circle-exclamation"></i>
+                    API Key Required
+                </div>
+            </div>
+            
+            <div class="chat-info">
+                <h3>Health Assistant Features</h3>
+                <div class="health-features">
+                    <div class="feature-item" data-feature="symptom-analysis">
+                        <i class="fas fa-stethoscope"></i>
+                        <span>Symptom Analysis</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="feature-item" data-feature="medication-info">
+                        <i class="fas fa-pills"></i>
+                        <span>Medication Information</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="feature-item" data-feature="health-recommendations">
+                        <i class="fas fa-heart"></i>
+                        <span>Health Recommendations</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="feature-item" data-feature="image-analysis">
+                        <i class="fas fa-camera"></i>
+                        <span>Medical Image Analysis</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="feature-item" data-feature="report-analysis">
+                        <i class="fas fa-file-medical"></i>
+                        <span>Report Analysis</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="feature-item" data-feature="emergency-guidance">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Emergency Guidance</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <div class="quick-actions" id="quickActions" style="display: none;">
+                    <h4 id="quickActionsTitle">Quick Actions</h4>
+                    <div class="action-buttons" id="actionButtons">
+                        <!-- Dynamic buttons will be added here -->
+                    </div>
+                </div>
+                
+                <div class="disclaimer">
+                    <p><strong>Medical Disclaimer:</strong> This AI assistant provides general health information only and should not replace professional medical advice. All AI responses are for informational purposes only.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-main">
+            <div class="chat-search">
+                <div class="search-input-container">
+                    <input type="text" id="messageSearch" placeholder="Search conversation...">
+                    <button id="searchBtn"><i class="fas fa-search"></i></button>
+                    <button id="exportChat" class="btn btn-secondary btn-small" title="Export conversation">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+                <div class="search-results" id="searchResults" style="display: none;"></div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <p>Hello! I'm your AI Health Assistant powered by Google Gemini. I can help you with:</p>
+                        <ul>
+                            <li>Symptom analysis and health concerns</li>
+                            <li>General medical information</li>
+                            <li>Wellness and prevention tips</li>
+                            <li>When to seek professional care</li>
+                        </ul>
+                        <p>Please configure your Gemini API key to get started. How can I assist you today?</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input">
+                    <button id="attachImage" class="btn btn-secondary btn-icon" title="Upload medical image" disabled>
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    <input type="text" id="messageInput" placeholder="Describe your symptoms or ask a health question..." disabled>
+                    <button id="sendMessage" class="btn btn-primary" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="selected-image" id="selectedImage" style="display: none;">
+                    <div class="selected-image-preview">
+                        <img id="selectedImg" alt="Selected image">
+                        <div class="selected-image-info">
+                            <span id="selectedImageName"></span>
+                            <button id="removeSelectedImage" class="btn-remove">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/gemini.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/patient-profile.js"></script>
+    <script src="js/consultation-history.js"></script>
+    <script src="js/smart-medical-forms.js"></script>
+    <script src="js/body-diagram.js"></script>
+    <script src="js/enhanced-ai-context.js"></script>
+    <script src="js/performance-monitor.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

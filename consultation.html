@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Consultation - TeleMed</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="index.html">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>TeleMed</span>
+                    </a>
+                </div>
+                <div class="nav-title">
+                    <i class="fas fa-video"></i>
+                    Video Consultation
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="consultation-container">
+        <div class="video-section">
+            <div class="video-grid">
+                <div class="video-container main-video">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <div class="video-label">Doctor</div>
+                </div>
+                <div class="video-container local-video">
+                    <video id="localVideo" autoplay playsinline muted></video>
+                    <div class="video-label">You</div>
+                </div>
+            </div>
+            
+            <div class="video-controls">
+                <button id="toggleVideo" class="control-btn">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button id="toggleAudio" class="control-btn">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button id="shareScreen" class="control-btn">
+                    <i class="fas fa-desktop"></i>
+                </button>
+                <button id="endCall" class="control-btn end-call">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="consultation-sidebar">
+            <div class="connection-status">
+                <h3>Connection Status</h3>
+                <div class="status" id="connectionStatus">
+                    <i class="fas fa-circle-exclamation"></i>
+                    Not Connected
+                </div>
+            </div>
+
+            <div class="consultation-info">
+                <h3>Consultation Details</h3>
+                <div class="info-item">
+                    <label>Room ID:</label>
+                    <input type="text" id="roomId" placeholder="Enter room ID">
+                </div>
+                <div class="info-item">
+                    <label>Patient Name:</label>
+                    <input type="text" id="patientName" placeholder="Your name">
+                </div>
+                <button id="joinCall" class="btn btn-primary">Join Consultation</button>
+            </div>
+
+            <div class="consultation-notes">
+                <h3>Session Notes</h3>
+                <textarea id="sessionNotes" placeholder="Take notes during consultation..."></textarea>
+                <button id="saveNotes" class="btn btn-secondary">Save Notes</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/webrtc.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

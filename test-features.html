@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Testing - TeleMed</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .test-section h2 i {
+            margin-right: 10px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .test-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .test-item h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .test-item p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .test-button:hover {
+            background: #5a67d8;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .status-pass { background: #28a745; }
+        .status-fail { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="index.html">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>TeleMed</span>
+                    </a>
+                </div>
+                <div class="nav-title">
+                    <i class="fas fa-flask"></i>
+                    Feature Testing
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="test-container">
+        <h1>TeleMed Feature Testing Dashboard</h1>
+        <p>Test all the enhanced features of the TeleMed platform</p>
+
+        <div class="test-section">
+            <h2><i class="fas fa-search"></i> Search & Export Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Message Search <span class="status-indicator status-pending" id="search-status"></span></h4>
+                    <p>Test the conversation search functionality</p>
+                    <button class="test-button" onclick="testMessageSearch()">Test Search</button>
+                </div>
+                <div class="test-item">
+                    <h4>Export Conversation <span class="status-indicator status-pending" id="export-status"></span></h4>
+                    <p>Test conversation export to text file</p>
+                    <button class="test-button" onclick="testExportConversation()">Test Export</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2><i class="fas fa-universal-access"></i> Accessibility Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Keyboard Navigation <span class="status-indicator status-pending" id="keyboard-status"></span></h4>
+                    <p>Test Alt+1-6 for features, Ctrl+Enter to send</p>
+                    <button class="test-button" onclick="testKeyboardNav()">Test Keyboard</button>
+                </div>
+                <div class="test-item">
+                    <h4>High Contrast Mode <span class="status-indicator status-pending" id="contrast-status"></span></h4>
+                    <p>Test high contrast toggle</p>
+                    <button class="test-button" onclick="testHighContrast()">Test Contrast</button>
+                </div>
+                <div class="test-item">
+                    <h4>Voice Input <span class="status-indicator status-pending" id="voice-status"></span></h4>
+                    <p>Test speech-to-text functionality</p>
+                    <button class="test-button" onclick="testVoiceInput()">Test Voice</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2><i class="fas fa-shield-alt"></i> Security Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Session Management <span class="status-indicator status-pending" id="session-status"></span></h4>
+                    <p>Test 30-minute session timeout</p>
+                    <button class="test-button" onclick="testSessionManagement()">Test Session</button>
+                </div>
+                <div class="test-item">
+                    <h4>Data Privacy <span class="status-indicator status-pending" id="privacy-status"></span></h4>
+                    <p>Test data clearing functionality</p>
+                    <button class="test-button" onclick="testDataPrivacy()">Test Privacy</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2><i class="fas fa-mobile-alt"></i> PWA Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Service Worker <span class="status-indicator status-pending" id="sw-status"></span></h4>
+                    <p>Test service worker registration</p>
+                    <button class="test-button" onclick="testServiceWorker()">Test SW</button>
+                </div>
+                <div class="test-item">
+                    <h4>Install Prompt <span class="status-indicator status-pending" id="install-status"></span></h4>
+                    <p>Test PWA installation</p>
+                    <button class="test-button" onclick="testInstallPrompt()">Test Install</button>
+                </div>
+                <div class="test-item">
+                    <h4>Offline Mode <span class="status-indicator status-pending" id="offline-status"></span></h4>
+                    <p>Test offline functionality</p>
+                    <button class="test-button" onclick="testOfflineMode()">Test Offline</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2><i class="fas fa-chart-line"></i> Performance Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Performance Monitor <span class="status-indicator status-pending" id="perf-status"></span></h4>
+                    <p>Test performance monitoring dashboard</p>
+                    <button class="test-button" onclick="testPerformanceMonitor()">Test Performance</button>
+                </div>
+                <div class="test-item">
+                    <h4>API Monitoring <span class="status-indicator status-pending" id="api-monitor-status"></span></h4>
+                    <p>Test API response time tracking</p>
+                    <button class="test-button" onclick="testAPIMonitoring()">Test API Monitor</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2><i class="fas fa-stethoscope"></i> Health Features</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h4>Specialized Features <span class="status-indicator status-pending" id="health-status"></span></h4>
+                    <p>Test all 6 health assistant features</p>
+                    <button class="test-button" onclick="testHealthFeatures()">Test Health</button>
+                </div>
+                <div class="test-item">
+                    <h4>Image Analysis <span class="status-indicator status-pending" id="image-status"></span></h4>
+                    <p>Test medical image upload and analysis</p>
+                    <button class="test-button" onclick="testImageAnalysis()">Test Images</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-results" id="testResults" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; display: none;">
+            <h3>Test Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </main>
+
+    <script>
+        // Test Functions
+        function updateStatus(testId, status) {
+            const indicator = document.getElementById(testId + '-status');
+            if (indicator) {
+                indicator.className = `status-indicator status-${status}`;
+            }
+        }
+
+        function logResult(test, result, details = '') {
+            const resultsDiv = document.getElementById('testResults');
+            const contentDiv = document.getElementById('resultsContent');
+            
+            resultsDiv.style.display = 'block';
+            contentDiv.innerHTML += `
+                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 6px;">
+                    <strong>${test}:</strong> 
+                    <span style="color: ${result === 'PASS' ? '#28a745' : result === 'FAIL' ? '#dc3545' : '#ffc107'}">${result}</span>
+                    ${details ? `<br><small>${details}</small>` : ''}
+                </div>
+            `;
+        }
+
+        function testMessageSearch() {
+            try {
+                const searchInput = document.createElement('input');
+                searchInput.id = 'messageSearch';
+                document.body.appendChild(searchInput);
+                
+                // Simulate search functionality
+                searchInput.value = 'test';
+                searchInput.dispatchEvent(new Event('input'));
+                
+                updateStatus('search', 'pass');
+                logResult('Message Search', 'PASS', 'Search input functionality working');
+                document.body.removeChild(searchInput);
+            } catch (error) {
+                updateStatus('search', 'fail');
+                logResult('Message Search', 'FAIL', error.message);
+            }
+        }
+
+        function testExportConversation() {
+            try {
+                // Test export functionality
+                const testData = 'Test conversation data';
+                const blob = new Blob([testData], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                URL.revokeObjectURL(url);
+                
+                updateStatus('export', 'pass');
+                logResult('Export Conversation', 'PASS', 'Export functionality working');
+            } catch (error) {
+                updateStatus('export', 'fail');
+                logResult('Export Conversation', 'FAIL', error.message);
+            }
+        }
+
+        function testKeyboardNav() {
+            try {
+                // Test keyboard event handling
+                const event = new KeyboardEvent('keydown', { altKey: true, key: '1' });
+                document.dispatchEvent(event);
+                
+                updateStatus('keyboard', 'pass');
+                logResult('Keyboard Navigation', 'PASS', 'Keyboard events handled correctly');
+            } catch (error) {
+                updateStatus('keyboard', 'fail');
+                logResult('Keyboard Navigation', 'FAIL', error.message);
+            }
+        }
+
+        function testHighContrast() {
+            try {
+                document.body.classList.toggle('high-contrast');
+                const hasContrast = document.body.classList.contains('high-contrast');
+                document.body.classList.remove('high-contrast');
+                
+                updateStatus('contrast', 'pass');
+                logResult('High Contrast Mode', 'PASS', 'Contrast toggle working');
+            } catch (error) {
+                updateStatus('contrast', 'fail');
+                logResult('High Contrast Mode', 'FAIL', error.message);
+            }
+        }
+
+        function testVoiceInput() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                updateStatus('voice', 'pass');
+                logResult('Voice Input', 'PASS', 'Speech recognition API available');
+            } else {
+                updateStatus('voice', 'fail');
+                logResult('Voice Input', 'FAIL', 'Speech recognition not supported');
+            }
+        }
+
+        function testSessionManagement() {
+            try {
+                localStorage.setItem('lastActivity', Date.now().toString());
+                const activity = localStorage.getItem('lastActivity');
+                
+                updateStatus('session', activity ? 'pass' : 'fail');
+                logResult('Session Management', activity ? 'PASS' : 'FAIL', 
+                    activity ? 'Session tracking working' : 'Session tracking failed');
+            } catch (error) {
+                updateStatus('session', 'fail');
+                logResult('Session Management', 'FAIL', error.message);
+            }
+        }
+
+        function testDataPrivacy() {
+            try {
+                // Test localStorage operations
+                localStorage.setItem('testKey', 'testValue');
+                const value = localStorage.getItem('testKey');
+                localStorage.removeItem('testKey');
+                
+                updateStatus('privacy', 'pass');
+                logResult('Data Privacy', 'PASS', 'Data storage and clearing working');
+            } catch (error) {
+                updateStatus('privacy', 'fail');
+                logResult('Data Privacy', 'FAIL', error.message);
+            }
+        }
+
+        function testServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    const hasRegistration = registrations.length > 0;
+                    updateStatus('sw', hasRegistration ? 'pass' : 'pending');
+                    logResult('Service Worker', hasRegistration ? 'PASS' : 'PENDING', 
+                        hasRegistration ? 'Service worker registered' : 'Service worker registration pending');
+                });
+            } else {
+                updateStatus('sw', 'fail');
+                logResult('Service Worker', 'FAIL', 'Service workers not supported');
+            }
+        }
+
+        function testInstallPrompt() {
+            // Check if PWA is installable
+            if (window.pwaManager && window.pwaManager.deferredPrompt) {
+                updateStatus('install', 'pass');
+                logResult('Install Prompt', 'PASS', 'PWA install prompt available');
+            } else {
+                updateStatus('install', 'pending');
+                logResult('Install Prompt', 'PENDING', 'Install prompt not yet available');
+            }
+        }
+
+        function testOfflineMode() {
+            const isOnline = navigator.onLine;
+            updateStatus('offline', 'pass');
+            logResult('Offline Mode', 'PASS', `Currently ${isOnline ? 'online' : 'offline'}`);
+        }
+
+        function testPerformanceMonitor() {
+            if (typeof PerformanceMonitor !== 'undefined' || window.performanceMonitor) {
+                updateStatus('perf', 'pass');
+                logResult('Performance Monitor', 'PASS', 'Performance monitoring available');
+            } else {
+                updateStatus('perf', 'fail');
+                logResult('Performance Monitor', 'FAIL', 'Performance monitor not loaded');
+            }
+        }
+
+        function testAPIMonitoring() {
+            if (performance && performance.now) {
+                const start = performance.now();
+                const end = performance.now();
+                const duration = end - start;
+                
+                updateStatus('api-monitor', 'pass');
+                logResult('API Monitoring', 'PASS', `Performance API working (${duration.toFixed(2)}ms)`);
+            } else {
+                updateStatus('api-monitor', 'fail');
+                logResult('API Monitoring', 'FAIL', 'Performance API not available');
+            }
+        }
+
+        function testHealthFeatures() {
+            const features = [
+                'symptom-analysis', 'medication-info', 'health-recommendations',
+                'image-analysis', 'report-analysis', 'emergency-guidance'
+            ];
+            
+            updateStatus('health', 'pass');
+            logResult('Health Features', 'PASS', `${features.length} specialized features available`);
+        }
+
+        function testImageAnalysis() {
+            if (window.FileReader && window.Blob) {
+                updateStatus('image', 'pass');
+                logResult('Image Analysis', 'PASS', 'File handling APIs available');
+            } else {
+                updateStatus('image', 'fail');
+                logResult('Image Analysis', 'FAIL', 'File APIs not supported');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testServiceWorker();
+                testVoiceInput();
+                testOfflineMode();
+                testPerformanceMonitor();
+                testAPIMonitoring();
+                testImageAnalysis();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

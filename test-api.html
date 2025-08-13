@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            width: 300px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gemini API Connection Test</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Configure API Key</h2>
+        <p>Enter your Gemini API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+        <input type="password" id="apiKey" placeholder="Enter your Gemini API key">
+        <button onclick="saveApiKey()">Save API Key</button>
+        <div id="keyStatus" class="result info">No API key configured</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test API Connection</h2>
+        <button onclick="testConnection()" id="testBtn" disabled>Test Connection</button>
+        <div id="testResult" class="result info">Configure API key first</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Send Test Message</h2>
+        <input type="text" id="testMessage" placeholder="Enter a test message" value="Hello, how are you?">
+        <button onclick="sendTestMessage()" id="messageBtn" disabled>Send Message</button>
+        <div id="messageResult" class="result info">Test connection first</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Information</h2>
+        <button onclick="showDebugInfo()">Show Debug Info</button>
+        <pre id="debugInfo" style="display: none;"></pre>
+    </div>
+
+    <script>
+        let geminiAssistant = null;
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showResult('keyStatus', 'Please enter an API key', 'error');
+                return;
+            }
+
+            localStorage.setItem('geminiApiKey', apiKey);
+            showResult('keyStatus', 'API key saved successfully', 'success');
+            
+            // Enable test button
+            document.getElementById('testBtn').disabled = false;
+            document.getElementById('testResult').textContent = 'Ready to test connection';
+            document.getElementById('testResult').className = 'result info';
+        }
+
+        async function testConnection() {
+            const apiKey = localStorage.getItem('geminiApiKey');
+            if (!apiKey) {
+                showResult('testResult', 'No API key found', 'error');
+                return;
+            }
+
+            showResult('testResult', 'Testing connection...', 'info');
+
+            const testBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: "Hello! Please respond with 'Connection successful' to confirm you're working."
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 50,
+                }
+            };
+
+            try {
+                console.log('Testing API with URL:', `${API_URL}?key=${apiKey.substring(0, 10)}...`);
+                
+                const response = await fetch(`${API_URL}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testBody)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        console.error('Error response:', errorData);
+                        errorMessage = errorData.error?.message || errorMessage;
+                    } catch (e) {
+                        console.error('Could not parse error response');
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                console.log('Success response:', data);
+
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    showResult('testResult', `✅ Connection successful! Response: "${responseText}"`, 'success');
+                    
+                    // Enable message test
+                    document.getElementById('messageBtn').disabled = false;
+                    document.getElementById('messageResult').textContent = 'Ready to send test message';
+                    document.getElementById('messageResult').className = 'result info';
+                } else {
+                    throw new Error('Invalid response format from API');
+                }
+
+            } catch (error) {
+                console.error('API Test Failed:', error);
+                showResult('testResult', `❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendTestMessage() {
+            const apiKey = localStorage.getItem('geminiApiKey');
+            const message = document.getElementById('testMessage').value.trim();
+            
+            if (!apiKey) {
+                showResult('messageResult', 'No API key found', 'error');
+                return;
+            }
+            
+            if (!message) {
+                showResult('messageResult', 'Please enter a test message', 'error');
+                return;
+            }
+
+            showResult('messageResult', 'Sending message...', 'info');
+
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: message
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 200,
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error?.message || errorMessage;
+                    } catch (e) {
+                        // ignore
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    showResult('messageResult', `✅ Message sent successfully!\n\nYour message: "${message}"\n\nAI Response: "${responseText}"`, 'success');
+                } else {
+                    throw new Error('Invalid response format from API');
+                }
+
+            } catch (error) {
+                console.error('Message send failed:', error);
+                showResult('messageResult', `❌ Message failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function showDebugInfo() {
+            const debugInfo = {
+                userAgent: navigator.userAgent,
+                currentURL: window.location.href,
+                apiURL: API_URL,
+                hasApiKey: !!localStorage.getItem('geminiApiKey'),
+                apiKeyLength: localStorage.getItem('geminiApiKey')?.length || 0,
+                localStorage: Object.keys(localStorage),
+                timestamp: new Date().toISOString()
+            };
+
+            document.getElementById('debugInfo').textContent = JSON.stringify(debugInfo, null, 2);
+            document.getElementById('debugInfo').style.display = 'block';
+        }
+
+        // Load API key on page load
+        window.addEventListener('load', () => {
+            const savedKey = localStorage.getItem('geminiApiKey');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+                showResult('keyStatus', 'API key loaded from storage', 'success');
+                document.getElementById('testBtn').disabled = false;
+                document.getElementById('testResult').textContent = 'Ready to test connection';
+                document.getElementById('testResult').className = 'result info';
+            }
+        });
+    </script>
+</body>
+</html>
